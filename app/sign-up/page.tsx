@@ -352,8 +352,9 @@ export default function SignupPage() {
           <div className="min-h-full flex flex-col justify-center px-6 py-12 sm:px-12 md:p-16 lg:p-20">
             <div className="w-full max-w-md mx-auto">
 
-              <h1 className="text-4xl font-extrabold text-white mb-3">
-                Oasis <span className="font-light">Portal</span>
+                <h1 className="text-4xl font-light  text-white mb-2">
+                Oasis<span className="text-orange-400 text-4xl font-extrabold">Portal</span>
+                
               </h1>
 
               <div className="my-10">
