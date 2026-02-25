@@ -613,6 +613,25 @@ export default function Sidebar({ activePage }: { activePage: PageId }) {
         <div style={{ padding: "28px 24px 20px" }}>
           <Link href="/dashboard" style={{ textDecoration: "none" }}>
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.5px", color: logoColor }}>
+
+
+
+                  <div className='justify-center px-7'>
+            <span className="w-8 h-8 bg-[#111]  rounded-md grid grid-cols-2 grid-rows-2 gap-0.75 p-1.25 mt-1">
+            <span className="bg-[#f0f0ed] rounded-[1px]" />
+            <span className="bg-[#f0f0ed] rounded-[1px]" />
+            <span className="bg-[#f0f0ed] rounded-[1px]" />
+            <span className="bg-[#f0f0ed] rounded-[1px]" />
+          </span>
+
+               
+          </div>
+
+
+
+
+
+
               <span style={{ fontWeight: 300 }}>oasis</span>
               <span style={{ fontWeight: 900 }}>Portal</span>
             </span>

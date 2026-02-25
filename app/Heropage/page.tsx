@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const partners = ["BioSync", "CellCore", "NovaBio"];
+const partners = ["Godsent Oko-Ose", "Geesoft Studios", "Sentok Ventures"];
 
 export default function Home() {
   return (
@@ -31,14 +31,19 @@ export default function Home() {
         </span>
 
         {/* Headline */}
+        {/* <h1 className="font-black text-[42px] md:text-[64px] leading-[1.05] tracking-[-2.5px] text-[#111] mb-5 animate-[fadeUp_0.7s_0.05s_ease_both]">
+          Manage your cells<br />on your own effectively.
+        </h1> */}
         <h1 className="font-black text-[42px] md:text-[64px] leading-[1.05] tracking-[-2.5px] text-[#111] mb-5 animate-[fadeUp_0.7s_0.05s_ease_both]">
-          Manage your cells<br />on your own terms
+          
+          The Smart Way to <br />Manage Your Cells
+
+
         </h1>
 
         {/* Subtitle */}
-        <p className="text-[17px] font-light text-zinc-700 leading-relaxed max-w-[420px] mb-12 animate-[fadeUp_0.7s_0.1s_ease_both]">
-          Start organising and monitoring all your cell data from day one —
-          everything managed from one single dashboard.
+        <p className="text-[17px] font-medium text-zinc-700 leading-relaxed max-w-[420px] mb-12 animate-[fadeUp_0.7s_0.1s_ease_both]">
+         Organize, track, and monitor your cell ecosystem with confidence and clarity.  
         </p>
 
         {/* CTA Buttons */}
@@ -58,9 +63,9 @@ export default function Home() {
         </div>
 
         {/* Privacy note */}
-        <p className="italic text-[12px] text-[#888880] mt-4 animate-[fadeUp_0.7s_0.22s_ease_both]">
+        {/* <p className="italic text-[12px] text-[#888880] mt-4 animate-[fadeUp_0.7s_0.22s_ease_both]">
           No spam, ever. We respect your privacy.
-        </p>
+        </p> */}
       </section>
 
       {/* Social proof */}
@@ -70,7 +75,7 @@ export default function Home() {
         </p>
         <div className="flex items-center gap-8">
           {partners.map((name) => (
-            <div key={name} className="flex items-center gap-2 text-[13px] font-medium text-[#bbb]">
+            <div key={name} className="flex items-center gap-2 text-[13px] font-medium text-zinc-600">
               <span className="w-2 h-2 rounded-full bg-current opacity-60" />
               {name}
             </div>
