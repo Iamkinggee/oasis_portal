@@ -353,23 +353,24 @@ export default function SignupPage() {
             <div className="w-full max-w-md mx-auto">
 
 
-          <div className='flex gap-2'>
-            <span className="w-8 h-8 bg-[#111]  rounded-[6px] grid grid-cols-2 grid-rows-2 gap-[3px] p-[5px] mt-1">
+         
+          <div className='flex   md:justify-start justify-center mb-5'>
+            <span className="w-8 h-8 bg-[#111]  rounded-md grid grid-cols-2 grid-rows-2 gap-[3px] p-[5px] md:mt-1.5 mt-0">
             <span className="bg-[#f0f0ed] rounded-[1px]" />
             <span className="bg-[#f0f0ed] rounded-[1px]" />
             <span className="bg-[#f0f0ed] rounded-[1px]" />
             <span className="bg-[#f0f0ed] rounded-[1px]" />
           </span>
 
-                <h1 className="text-4xl font-light  text-white mb-2">
-                Oasis<span className="text-orange-400 text-4xl font-extrabold">Portal</span>
+                <h1 className="text-2xl font-light md:text-4xl  text-white mb-2">
+                Oasis<span className="text-orange-400 md:text-4xl font-extrabold">Portal</span>
                 
               </h1>
           </div>
 
               <div className="my-10">
-                <h2 className="py-2 font-semibold text-xl uppercase tracking-wide text-white">SIGN UP</h2>
-                <p className="text-zinc-400 text-base">
+                <h2 className="py-2 font-semibold text-center md:text-start text-xl uppercase tracking-wide text-white">SIGN UP</h2>
+                <p className="text-zinc-400 text-base text-center md:text-start">
                   Create your credentials to join the exclusive Oasis.
                 </p>
               </div>
