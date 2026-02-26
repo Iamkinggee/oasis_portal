@@ -534,8 +534,8 @@ import { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "oasisPortal",
-  description: "Cell group management portal",
+  title: "OasisPortal",
+  description: "Cell group management system",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

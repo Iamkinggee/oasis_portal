@@ -617,7 +617,7 @@ export default function Sidebar({ activePage }: { activePage: PageId }) {
 
 
                   <div className='justify-center px-7'>
-            <span className="w-8 h-8 bg-[#111]  rounded-md grid grid-cols-2 grid-rows-2 gap-0.75 p-1.25 mt-1">
+            <span className="w-5 h-5 bg-[#111]  rounded-md grid grid-cols-2 grid-rows-2 gap-0.75 p-1.25 mt-1">
             <span className="bg-[#f0f0ed] rounded-[1px]" />
             <span className="bg-[#f0f0ed] rounded-[1px]" />
             <span className="bg-[#f0f0ed] rounded-[1px]" />

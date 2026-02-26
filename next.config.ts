@@ -5,3 +5,15 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+
+
+
+// /** @type {import('next').NextConfig} */
+// const nextConfig = {
+//   experimental: {
+//     turbopack: false,   // ← This disables Turbopack
+//   },
+// };
+
+// export default nextConfig;
