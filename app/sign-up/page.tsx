@@ -467,17 +467,17 @@ export default function SignupPage() {
             <div className="w-full max-w-md mx-auto">
 
               {/* Logo */}
-              <div className="flex items-center gap-2 md:justify-start justify-center mb-5">
+                 <div className="flex items-center gap-2 md:justify-start justify-center mb-5">
                 <span className="w-8 h-8 bg-zinc-900 rounded-md grid grid-cols-2 grid-rows-2 gap-[3px] p-[5px] shrink-0">
                   {[0,1,2,3].map(i => <span key={i} className="bg-[#f0f0ed] rounded-[1px]" />)}
                 </span>
-                <h1 className={`text-2xl md:text-4xl font-light leading-none mb-0 ${t.headline}`}>
+                <h1 className={`text-xl md:text-2xl font-light leading-none mb-0 ${t.headline}`}>
                   Oasis<span className={`font-extrabold ${t.logoAccent}`}>Portal</span>
                 </h1>
               </div>
 
-              <div className="my-8 sm:my-10 text-center md:text-start">
-                <h2 className={`py-2 font-semibold text-xl uppercase tracking-wide ${t.headline}`}>Sign Up</h2>
+              <div className="my-8 sm:my-5 text-center md:text-start">
+                <h2 className={`py-2 font-semibold  uppercase tracking-wide ${t.headline}`}>Sign Up</h2>
                 <p className={t.subtitle}>Create your credentials to join the exclusive Oasis.</p>
               </div>
 
