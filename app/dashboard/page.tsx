@@ -528,7 +528,7 @@ function DonutChart({ isDark, presentPct, absentPct, newPct }: {
   });
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
+    <div  className='mb-10 md:mb-0' style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
       <div style={{ flexShrink: 0 }}>
         <svg width={SZ} height={SZ}>
           <circle cx={cx} cy={cy} r={R - sw / 2} fill="none"
@@ -930,15 +930,16 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Scripture Quote ──────────────────────────────────────────────────── */}
-      <DashCard isDark={isDark} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <DashCard  isDark={isDark} style={{ display: 'flex', gap: 16, alignItems: 'flex-start',  marginBottom: 50 }}>
         <div style={{
           width: 40, height: 40, borderRadius: 12, flexShrink: 0,
           background: 'linear-gradient(135deg, #06b6d4, #818cf8)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+        
         }}>
           <span style={{ color: '#fff', fontSize: 22, fontWeight: 900, lineHeight: 1 }}>"</span>
         </div>
-        <div>
+        <div >
           <p style={{ fontSize: 13, fontStyle: 'italic', color: ts, margin: 0, lineHeight: 1.75 }}>
             "Not forsaking the assembling of ourselves together, as the manner of some is; but exhorting one another: and so much the more, as ye see the day approaching."
           </p>
