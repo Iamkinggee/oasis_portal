@@ -71,12 +71,89 @@
 
 
 
-// middleware.ts  ← goes at ROOT of your Next.js project
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+// // middleware.ts  ← goes at ROOT of your Next.js project
+// import { createServerClient } from '@supabase/ssr'
+// import { NextResponse, type NextRequest } from 'next/server'
+
+// export async function middleware(request: NextRequest) {
+//   let supabaseResponse = NextResponse.next({ request })
+
+//   const supabase = createServerClient(
+//     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+//     {
+//       cookies: {
+//         getAll() {
+//           return request.cookies.getAll()
+//         },
+//         setAll(cookiesToSet) {
+//           cookiesToSet.forEach(({ name, value }) =>
+//             request.cookies.set(name, value)
+//           )
+//           supabaseResponse = NextResponse.next({ request })
+//           cookiesToSet.forEach(({ name, value, options }) =>
+//             supabaseResponse.cookies.set(name, value, options)
+//           )
+//         },
+//       },
+//     }
+//   )
+
+//   // Refresh session — MUST be called before any auth checks
+//   const { data: { user } } = await supabase.auth.getUser()
+
+//   const { pathname } = request.nextUrl
+
+//   // ── Protect all /dashboard routes ────────────────────────────────────────
+//   // If user hits any /dashboard page without a valid session → hero page
+//   if (pathname.startsWith('/dashboard') && !user) {
+//     const url = request.nextUrl.clone()
+//     url.pathname = '/Heropage'
+//     return NextResponse.redirect(url)
+//   }
+
+//   // ── Redirect logged-in users away from auth pages ─────────────────────
+//   // If already signed in and they visit /login or /sign-up → dashboard
+//   const authRoutes = ['/login', '/sign-up']
+//   if (authRoutes.includes(pathname) && user) {
+//     const url = request.nextUrl.clone()
+//     url.pathname = '/dashboard'
+//     return NextResponse.redirect(url)
+//   }
+
+//   return supabaseResponse
+// }
+
+// export const config = {
+//   matcher: [
+//     // Run on all routes except static files and Next.js internals
+//     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+//   ],
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// middleware.ts  ← place this at your project ROOT (same level as app/)
+// Protects /dashboard/* routes and keeps the Supabase session alive.
+
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,49 +161,48 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
+          );
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
-          )
+          );
         },
       },
     }
-  )
+  );
 
-  // Refresh session — MUST be called before any auth checks
-  const { data: { user } } = await supabase.auth.getUser()
+  // Refresh session — MUST happen before any redirects
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl;
+  const isDashboard  = pathname.startsWith('/dashboard');
+  const isAuthPage   = ['/login', '/sign-up', '/forgot-password'].includes(pathname);
 
-  // ── Protect all /dashboard routes ────────────────────────────────────────
-  // If user hits any /dashboard page without a valid session → hero page
-  if (pathname.startsWith('/dashboard') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/Heropage'
-    return NextResponse.redirect(url)
+  // Redirect unauthenticated users away from dashboard
+  if (isDashboard && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  // ── Redirect logged-in users away from auth pages ─────────────────────
-  // If already signed in and they visit /login or /sign-up → dashboard
-  const authRoutes = ['/login', '/sign-up']
-  if (authRoutes.includes(pathname) && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // Redirect authenticated users away from auth pages
+  if (isAuthPage && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
   }
 
-  return supabaseResponse
+  return supabaseResponse;
 }
 
 export const config = {
   matcher: [
-    // Run on all routes except static files and Next.js internals
+    // Run on all routes except static files and _next internals
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-}
+};

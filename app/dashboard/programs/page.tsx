@@ -1258,6 +1258,635 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 'use client';
+
+// import { useState, useEffect, useCallback, useMemo } from 'react';
+// import {
+//   Plus, Trash2, Bell, Calendar, Clock, MapPin,
+//   FileText, ChevronRight, Search, AlertTriangle,
+//   MessageCircle, Mail, Phone, Copy, CheckCheck, Loader2,
+// } from 'lucide-react';
+// import { createClient } from '@supabase/supabase-js';
+// import { useTheme } from '@/app/components/ThemeProvider';
+// import {
+//   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+// } from '@/components/ui/dialog';
+
+// import {
+//   AlertDialog, AlertDialogAction, AlertDialogCancel,
+//   AlertDialogContent, AlertDialogDescription,
+//   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+// } from '@/components/ui/alert-dialog';
+
+// // ── Supabase ──────────────────────────────────────────────────────────────────
+// const supabase = createClient(
+//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+// );
+
+// // ── Types ─────────────────────────────────────────────────────────────────────
+// type Program = {
+//   id: number;
+//   title: string;
+//   date: string;
+//   time: string;
+//   venue: string;
+//   description: string;
+//   created_at: string;
+// };
+
+// type Member = { id: number; name: string; phone: string };
+// type ReminderChannel = 'whatsapp' | 'sms' | 'email';
+
+// // ── Helpers ───────────────────────────────────────────────────────────────────
+// function formatDate(iso: string) {
+//   if (!iso) return '';
+//   const d = new Date(iso + 'T00:00:00');
+//   return d.toLocaleDateString('en-US', {
+//     weekday: 'short', month: 'long', day: 'numeric', year: 'numeric',
+//   }).toUpperCase();
+// }
+
+// function formatMonth(iso: string) {
+//   if (!iso) return '';
+//   const d = new Date(iso + 'T00:00:00');
+//   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+// }
+
+// function daysFromNow(iso: string): string {
+//   const today = new Date(); today.setHours(0, 0, 0, 0);
+//   const target = new Date(iso + 'T00:00:00');
+//   const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+//   if (diff === 0) return 'TODAY';
+//   if (diff === 1) return 'TOMORROW';
+//   if (diff < 0) return `${Math.abs(diff)} DAYS AGO`;
+//   return `${diff} DAYS TO GO`;
+// }
+
+// function daysTag(iso: string): 'past' | 'today' | 'upcoming' {
+//   const today = new Date(); today.setHours(0, 0, 0, 0);
+//   const target = new Date(iso + 'T00:00:00');
+//   const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+//   if (diff < 0) return 'past';
+//   if (diff === 0) return 'today';
+//   return 'upcoming';
+// }
+
+// function formatTime(t: string) {
+//   if (!t) return '';
+//   const [h, m] = t.split(':').map(Number);
+//   const ampm = h >= 12 ? 'PM' : 'AM';
+//   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
+// }
+
+// function normalisePhone(raw: string): string {
+//   const digits = raw.replace(/\D/g, '');
+//   if (digits.startsWith('0')) return '234' + digits.slice(1);
+//   return digits;
+// }
+
+// function buildReminderMessage(program: Program): string {
+//   return `📢 *PROGRAM REMINDER*\n\n*${program.title}*\n\n📅 Date: ${formatDate(program.date)}\n⏰ Time: ${formatTime(program.time)}${program.venue ? `\n📍 Venue: ${program.venue}` : ''}${program.description ? `\n\n${program.description}` : ''}\n\nPlease make plans to attend. God bless you! 🙏`;
+// }
+
+// // ── Tag accent bar color (always the same, just the indicator) ────────────────
+// function tagBarColor(tag: string) {
+//   if (tag === 'today') return '#f59e0b';
+//   if (tag === 'past') return '#a1a1aa';
+//   return '#22c55e';
+// }
+
+// function tagBadgeStyle(tag: string, isDark: boolean): React.CSSProperties {
+//   if (tag === 'today') return { background: isDark ? 'rgba(245,158,11,0.15)' : '#fef3c7', color: isDark ? '#fbbf24' : '#92400e', border: `1px solid ${isDark ? 'rgba(245,158,11,0.3)' : '#fcd34d'}` };
+//   if (tag === 'past')  return { background: isDark ? 'rgba(161,161,170,0.12)' : '#f4f4f5', color: isDark ? '#a1a1aa' : '#71717a', border: `1px solid ${isDark ? 'rgba(161,161,170,0.2)' : '#d4d4d8'}` };
+//   return { background: isDark ? 'rgba(34,197,94,0.12)' : '#f0fdf4', color: isDark ? '#4ade80' : '#15803d', border: `1px solid ${isDark ? 'rgba(34,197,94,0.25)' : '#86efac'}` };
+// }
+
+// // ── Component ─────────────────────────────────────────────────────────────────
+// export default function ProgramPage() {
+//   const { isDark } = useTheme();
+
+//   // ── Theme tokens ────────────────────────────────────────────────────────────
+//   const pageBg       = isDark ? '#0f1117' : '#f8f9fb';
+//   const cardBg       = isDark ? '#16181f' : '#ffffff';
+//   const cardBd       = isDark ? '#1e2028' : '#e5e7eb';
+//   const cardHoverBd  = isDark ? '#2d2f3a' : '#d1d5db';
+//   const headBg       = isDark ? '#111318' : '#f9fafb';
+//   const textPrimary  = isDark ? '#f3f4f6' : '#111827';
+//   const textMuted    = isDark ? '#6b7280' : '#6b7280';
+//   const textSub      = isDark ? '#9ca3af' : '#9ca3af';
+//   const inputBg      = isDark ? '#1a1d27' : '#ffffff';
+//   const inputBd      = isDark ? '#2a2d3a' : '#e5e7eb';
+//   const dividerBd    = isDark ? '#1e2028' : '#f0f0f0';
+//   const rowBg        = isDark ? '#1a1d27' : '#f9fafb';
+//   const sectionLabel = { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: textMuted };
+
+//   const [programs,        setPrograms]        = useState<Program[]>([]);
+//   const [members,         setMembers]         = useState<Member[]>([]);
+//   const [loading,         setLoading]         = useState(true);
+//   const [search,          setSearch]          = useState('');
+//   const [createOpen,      setCreateOpen]      = useState(false);
+//   const [viewProgram,     setViewProgram]     = useState<Program | null>(null);
+//   const [deleteId,        setDeleteId]        = useState<number | null>(null);
+//   const [reminderProgram, setReminderProgram] = useState<Program | null>(null);
+//   const [reminderChannel, setReminderChannel] = useState<ReminderChannel>('whatsapp');
+//   const [copiedBroadcast, setCopiedBroadcast] = useState(false);
+//   const [copiedMember,    setCopiedMember]    = useState<number | null>(null);
+//   const [toast,           setToast]           = useState<string | null>(null);
+//   const [saving,          setSaving]          = useState(false);
+//   const [form,            setForm]            = useState({ title: '', date: '', time: '', venue: '', description: '' });
+//   const [formError,       setFormError]       = useState('');
+
+//   const fetchPrograms = useCallback(async () => {
+//     const { data } = await supabase.from('programs').select('*').order('date', { ascending: true });
+//     if (data) setPrograms(data);
+//   }, []);
+
+//   const fetchMembers = useCallback(async () => {
+//     const { data } = await supabase.from('members').select('id, name, phone').order('created_at', { ascending: true });
+//     if (data) setMembers(data);
+//   }, []);
+
+//   useEffect(() => {
+//     const init = async () => { setLoading(true); await Promise.all([fetchPrograms(), fetchMembers()]); setLoading(false); };
+//     init();
+//   }, [fetchPrograms, fetchMembers]);
+
+//   useEffect(() => {
+//     const sub = supabase.channel('programs-rt')
+//       .on('postgres_changes', { event: '*', schema: 'public', table: 'programs' }, fetchPrograms)
+//       .subscribe();
+//     return () => { supabase.removeChannel(sub); };
+//   }, [fetchPrograms]);
+
+//   const filtered = useMemo(() => {
+//     if (!search.trim()) return programs;
+//     const q = search.toLowerCase();
+//     return programs.filter(p => p.title.toLowerCase().includes(q) || (p.venue || '').toLowerCase().includes(q));
+//   }, [programs, search]);
+
+//   const grouped = useMemo(() => {
+//     const map = new Map<string, Program[]>();
+//     filtered.forEach(p => {
+//       const key = formatMonth(p.date);
+//       if (!map.has(key)) map.set(key, []);
+//       map.get(key)!.push(p);
+//     });
+//     return map;
+//   }, [filtered]);
+
+//   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+//   const handleCreate = async () => {
+//     if (!form.title.trim() || !form.date || !form.time) { setFormError('Title, date and time are required.'); return; }
+//     setSaving(true);
+//     const { error } = await supabase.from('programs').insert([{
+//       title: form.title.trim().toUpperCase(), date: form.date, time: form.time,
+//       venue: form.venue.trim() || null, description: form.description.trim() || null,
+//     }]);
+//     setSaving(false);
+//     if (error) { setFormError('Failed to save. Please try again.'); return; }
+//     setForm({ title: '', date: '', time: '', venue: '', description: '' });
+//     setFormError(''); setCreateOpen(false);
+//     showToast('Program created successfully!');
+//   };
+
+//   const handleDelete = async () => {
+//     if (deleteId === null) return;
+//     await supabase.from('programs').delete().eq('id', deleteId);
+//     if (viewProgram?.id === deleteId) setViewProgram(null);
+//     setDeleteId(null); showToast('Program deleted.');
+//   };
+
+//   const getReminderLink = (member: Member, program: Program, channel: ReminderChannel): string => {
+//     const msg = buildReminderMessage(program);
+//     const phone = normalisePhone(member.phone);
+//     const encoded = encodeURIComponent(msg);
+//     if (channel === 'whatsapp') return `https://wa.me/${phone}?text=${encoded}`;
+//     if (channel === 'sms') return `sms:+${phone}?body=${encoded}`;
+//     return `mailto:?to=&subject=${encodeURIComponent(program.title)}&body=${encoded}`;
+//   };
+
+//   const handleCopyBroadcast = async (program: Program) => {
+//     await navigator.clipboard.writeText(buildReminderMessage(program));
+//     setCopiedBroadcast(true); setTimeout(() => setCopiedBroadcast(false), 2000);
+//   };
+
+//   const handleCopyMember = async (idx: number, member: Member, program: Program) => {
+//     await navigator.clipboard.writeText(buildReminderMessage(program));
+//     setCopiedMember(idx); setTimeout(() => setCopiedMember(null), 1800);
+//   };
+
+//   const channelLabel = (ch: ReminderChannel) => ch === 'whatsapp' ? 'WhatsApp' : ch === 'sms' ? 'SMS' : 'Email';
+//   const channelBg    = (ch: ReminderChannel, active: boolean) => {
+//     if (!active) return { background: cardBg, borderColor: cardBd, color: textMuted };
+//     if (ch === 'whatsapp') return { background: isDark ? 'rgba(34,197,94,0.12)' : '#f0fdf4', borderColor: '#22c55e', color: isDark ? '#4ade80' : '#15803d' };
+//     if (ch === 'sms')      return { background: isDark ? 'rgba(59,130,246,0.12)' : '#eff6ff', borderColor: '#3b82f6', color: isDark ? '#60a5fa' : '#1d4ed8' };
+//     return { background: isDark ? 'rgba(99,102,241,0.12)' : '#eef2ff', borderColor: '#6366f1', color: isDark ? '#818cf8' : '#4338ca' };
+//   };
+//   const channelSendBg = (ch: ReminderChannel) => {
+//     if (ch === 'whatsapp') return '#16a34a';
+//     if (ch === 'sms')      return '#2563eb';
+//     return '#4f46e5';
+//   };
+
+//   // ── Inline input/textarea style ──────────────────────────────────────────
+//   const inputStyle: React.CSSProperties = {
+//     height: 44, padding: '0 12px', borderRadius: 8, border: `1.5px solid ${inputBd}`,
+//     background: inputBg, color: textPrimary, fontSize: 14, fontFamily: 'inherit',
+//     outline: 'none', width: '100%', boxSizing: 'border-box',
+//   };
+//   const textareaStyle: React.CSSProperties = {
+//     padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${inputBd}`,
+//     background: inputBg, color: textPrimary, fontSize: 14, fontFamily: 'inherit',
+//     outline: 'none', width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 96,
+//   };
+//   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: textSub, letterSpacing: '0.04em', display: 'block', marginBottom: 6 };
+//   const btnPrimary: React.CSSProperties = { height: 42, padding: '0 20px', borderRadius: 8, border: 'none', background: isDark ? '#f3f4f6' : '#111827', color: isDark ? '#111827' : '#ffffff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 };
+//   const btnSecondary: React.CSSProperties = { height: 42, padding: '0 16px', borderRadius: 8, border: `1.5px solid ${cardBd}`, background: 'transparent', color: textMuted, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' };
+//   const btnDanger: React.CSSProperties = { height: 42, padding: '0 16px', borderRadius: 8, border: `1.5px solid ${isDark ? 'rgba(239,68,68,0.3)' : '#fca5a5'}`, background: isDark ? 'rgba(239,68,68,0.08)' : '#fff1f2', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 };
+
+//   // ── Dialog shared wrapper style ────────────────────────────────────────────
+//   const dialogStyle: React.CSSProperties = {
+//     background: cardBg, border: `1px solid ${cardBd}`, borderRadius: 20,
+//     padding: 0, display: 'flex', flexDirection: 'column', color: textPrimary,
+//     maxHeight: '90vh',
+//   };
+//   const dialogHead: React.CSSProperties = { padding: '20px 22px 16px', borderBottom: `1px solid ${dividerBd}`, flexShrink: 0 };
+//   const dialogFoot: React.CSSProperties = { padding: '14px 22px 18px', borderTop: `1px solid ${dividerBd}`, flexShrink: 0 };
+
+//   if (loading) return (
+//     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+//       <Loader2 style={{ width: 32, height: 32, color: textSub, animation: 'spin 1s linear infinite' }} />
+//       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+//     </div>
+//   );
+
+//   return (
+//     <div suppressHydrationWarning style={{ background: pageBg, minHeight: '100vh', padding: '20px 16px 80px', boxSizing: 'border-box', transition: 'background 0.3s' }}>
+//       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+
+//       {/* Toast */}
+//       {toast && (
+//         <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, background: isDark ? '#f3f4f6' : '#111827', color: isDark ? '#111827' : '#ffffff', padding: '10px 20px', borderRadius: 14, fontSize: 13, fontWeight: 600, boxShadow: '0 8px 24px rgba(0,0,0,0.25)', whiteSpace: 'nowrap' }}>
+//           {toast}
+//         </div>
+//       )}
+
+//       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+
+//         {/* ── Header ── */}
+//         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+//           <h1 style={{ fontSize: 20, fontWeight: 800, color: textPrimary, letterSpacing: '-0.3px', margin: 0 }}>PROGRAM</h1>
+//           <button onClick={() => setCreateOpen(true)} style={{ ...btnPrimary, height: 44, padding: '0 20px', fontSize: 13 }}>
+//             <Plus size={15} /> CREATE PROGRAM
+//           </button>
+//         </div>
+
+//         {/* ── Search ── */}
+//         <div style={{ position: 'relative', maxWidth: 340, marginBottom: 24 }}>
+//           <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: textSub, pointerEvents: 'none' }} />
+//           <input
+//             placeholder="Search programs..."
+//             value={search}
+//             onChange={e => setSearch(e.target.value)}
+//             style={{ ...inputStyle, paddingLeft: 36, height: 44 }}
+//           />
+//         </div>
+
+//         {/* ── Program Groups ── */}
+//         {grouped.size === 0 ? (
+//           <div style={{ textAlign: 'center', padding: '80px 0', color: textSub }}>
+//             <FileText size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+//             <p style={{ fontSize: 14 }}>{search ? 'No programs match your search.' : 'No programs yet. Create one!'}</p>
+//           </div>
+//         ) : (
+//           Array.from(grouped.entries()).map(([month, progs]) => (
+//             <div key={month} style={{ marginBottom: 32 }}>
+//               <h2 style={{ ...sectionLabel, marginBottom: 12 }}>MONTH: {month}</h2>
+//               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+//                 {progs.map(prog => {
+//                   const tag = daysTag(prog.date);
+//                   return (
+//                     <div
+//                       key={prog.id}
+//                       onClick={() => setViewProgram(prog)}
+//                       style={{ background: cardBg, border: `1px solid ${cardBd}`, borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.18s', boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}
+//                       onMouseEnter={e => { e.currentTarget.style.borderColor = cardHoverBd; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.1)'; }}
+//                       onMouseLeave={e => { e.currentTarget.style.borderColor = cardBd; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)'; }}
+//                     >
+//                       {/* accent bar */}
+//                       <div style={{ height: 4, background: tagBarColor(tag) }} />
+//                       <div style={{ padding: '14px 16px' }}>
+//                         <p style={{ fontSize: 10, fontWeight: 700, color: textSub, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+//                           {formatDate(prog.date)}
+//                         </p>
+//                         <h3 style={{ fontSize: 14, fontWeight: 800, color: textPrimary, lineHeight: 1.3, marginBottom: 10, letterSpacing: '-0.2px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+//                           {prog.title}
+//                         </h3>
+//                         {prog.venue && (
+//                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: textSub, fontSize: 12, marginBottom: 10 }}>
+//                             <MapPin size={11} style={{ flexShrink: 0 }} />
+//                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prog.venue}</span>
+//                           </div>
+//                         )}
+//                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+//                           <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20, ...tagBadgeStyle(tag, isDark) }}>
+//                             {daysFromNow(prog.date)}
+//                           </span>
+//                           <ChevronRight size={14} color={textSub} />
+//                         </div>
+//                       </div>
+//                     </div>
+//                   );
+//                 })}
+//               </div>
+//             </div>
+//           ))
+//         )}
+//       </div>
+
+//       {/* ══════════════════════════════════════════════════════════════════
+//           VIEW PROGRAM DIALOG
+//       ══════════════════════════════════════════════════════════════════ */}
+//       <Dialog open={!!viewProgram} onOpenChange={() => setViewProgram(null)}>
+//         <DialogContent style={{ ...dialogStyle, width: 'min(92vw, 500px)' }}>
+//           <DialogTitle style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+//             {viewProgram?.title ?? 'View Program'}
+//           </DialogTitle>
+//           {viewProgram && (() => {
+//             const tag = daysTag(viewProgram.date);
+//             return (
+//               <>
+//                 <div style={{ height: 4, background: tagBarColor(tag), borderRadius: '20px 20px 0 0', flexShrink: 0 }} />
+//                 <div style={dialogHead}>
+//                   <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20, ...tagBadgeStyle(tag, isDark), display: 'inline-block', marginBottom: 10 }}>
+//                     {daysFromNow(viewProgram.date)}
+//                   </span>
+//                   <h2 style={{ fontSize: 20, fontWeight: 800, color: textPrimary, margin: 0, lineHeight: 1.2 }}>{viewProgram.title}</h2>
+//                 </div>
+
+//                 <div style={{ overflowY: 'auto', flex: 1, padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+//                   {[
+//                     { icon: <Calendar size={15} color={textSub} />, label: 'Date', value: formatDate(viewProgram.date) },
+//                     { icon: <Clock size={15} color={textSub} />, label: 'Time', value: formatTime(viewProgram.time) },
+//                     ...(viewProgram.venue ? [{ icon: <MapPin size={15} color={textSub} />, label: 'Venue', value: viewProgram.venue }] : []),
+//                   ].map(row => (
+//                     <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, background: rowBg, borderRadius: 12, padding: '10px 14px', border: `1px solid ${dividerBd}` }}>
+//                       <span style={{ flexShrink: 0 }}>{row.icon}</span>
+//                       <div>
+//                         <p style={{ ...sectionLabel, fontSize: 9, margin: '0 0 2px' }}>{row.label}</p>
+//                         <p style={{ fontSize: 13, fontWeight: 600, color: textPrimary, margin: 0 }}>{row.value}</p>
+//                       </div>
+//                     </div>
+//                   ))}
+//                   {viewProgram.description && (
+//                     <div style={{ paddingTop: 4 }}>
+//                       <p style={{ ...sectionLabel, fontSize: 9, marginBottom: 6 }}>Description</p>
+//                       <p style={{ fontSize: 13, color: isDark ? '#d1d5db' : '#374151', lineHeight: 1.6, margin: 0 }}>{viewProgram.description}</p>
+//                     </div>
+//                   )}
+//                 </div>
+
+//                 <div style={{ ...dialogFoot, display: 'flex', gap: 10 }}>
+//                   <button style={{ ...btnDanger, flex: 1, justifyContent: 'center' }} onClick={() => setDeleteId(viewProgram.id)}>
+//                     <Trash2 size={14} /> Delete
+//                   </button>
+//                   <button
+//                     style={{ ...btnPrimary, flex: 1, justifyContent: 'center' }}
+//                     onClick={() => { setReminderProgram(viewProgram); setViewProgram(null); setReminderChannel('whatsapp'); }}
+//                   >
+//                     <Bell size={14} /> Send Reminder
+//                   </button>
+//                 </div>
+//               </>
+//             );
+//           })()}
+//         </DialogContent>
+//       </Dialog>
+
+//       {/* ══════════════════════════════════════════════════════════════════
+//           CREATE PROGRAM DIALOG
+//       ══════════════════════════════════════════════════════════════════ */}
+//       <Dialog open={createOpen} onOpenChange={v => { setCreateOpen(v); setFormError(''); }}>
+//         <DialogContent style={{ ...dialogStyle, width: 'min(92vw, 460px)' }}>
+//           <div style={dialogHead}>
+//             <h2 style={{ fontSize: 18, fontWeight: 700, color: textPrimary, margin: 0 }}>Create Program</h2>
+//           </div>
+
+//           <div style={{ overflowY: 'auto', flex: 1, padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+//             {formError && (
+//               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDark ? 'rgba(239,68,68,0.1)' : '#fff1f2', border: `1px solid ${isDark ? 'rgba(239,68,68,0.25)' : '#fca5a5'}`, borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#ef4444' }}>
+//                 <AlertTriangle size={15} style={{ flexShrink: 0 }} /> {formError}
+//               </div>
+//             )}
+//             <div>
+//               <label style={labelStyle}>Program Title *</label>
+//               <input placeholder="e.g. Healing Streams Live Service" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
+//             </div>
+//             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+//               <div>
+//                 <label style={labelStyle}>Date *</label>
+//                 <input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} style={{ ...inputStyle, colorScheme: isDark ? 'dark' : 'light' }} />
+//               </div>
+//               <div>
+//                 <label style={labelStyle}>Time *</label>
+//                 <input type="time" value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} style={{ ...inputStyle, colorScheme: isDark ? 'dark' : 'light' }} />
+//               </div>
+//             </div>
+//             <div>
+//               <label style={labelStyle}>Venue</label>
+//               <input placeholder="e.g. Church Auditorium, Online" value={form.venue} onChange={e => setForm(p => ({ ...p, venue: e.target.value }))} style={inputStyle} />
+//             </div>
+//             <div>
+//               <label style={labelStyle}>Description</label>
+//               <textarea placeholder="Describe the program..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} style={textareaStyle} rows={4} />
+//             </div>
+//           </div>
+
+//           <div style={{ ...dialogFoot, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+//             <button style={btnSecondary} onClick={() => { setCreateOpen(false); setFormError(''); }}>Cancel</button>
+//             <button disabled={saving} onClick={handleCreate} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>
+//               {saving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
+//               Save Program
+//             </button>
+//           </div>
+//         </DialogContent>
+//       </Dialog>
+
+//       {/* ══════════════════════════════════════════════════════════════════
+//           DELETE CONFIRM DIALOG
+//       ══════════════════════════════════════════════════════════════════ */}
+//       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+//         <AlertDialogContent style={{ background: cardBg, border: `1px solid ${cardBd}`, borderRadius: 18, maxWidth: 'min(90vw, 400px)', color: textPrimary }}>
+//           <AlertDialogHeader>
+//             <AlertDialogTitle style={{ color: textPrimary }}>Delete Program?</AlertDialogTitle>
+//             <AlertDialogDescription style={{ color: textSub }}>
+//               This action cannot be undone. The program will be permanently removed.
+//             </AlertDialogDescription>
+//           </AlertDialogHeader>
+//           <AlertDialogFooter>
+//             <AlertDialogCancel style={{ background: cardBg, border: `1px solid ${cardBd}`, color: textMuted, borderRadius: 8 }}>Cancel</AlertDialogCancel>
+//             <AlertDialogAction style={{ background: '#ef4444', color: '#fff', borderRadius: 8, border: 'none' }} onClick={handleDelete}>
+//               Delete
+//             </AlertDialogAction>
+//           </AlertDialogFooter>
+//         </AlertDialogContent>
+//       </AlertDialog>
+
+//       {/* ══════════════════════════════════════════════════════════════════
+//           SEND REMINDER DIALOG
+//       ══════════════════════════════════════════════════════════════════ */}
+//       <Dialog open={!!reminderProgram} onOpenChange={v => { if (!v) setReminderProgram(null); }}>
+//         <DialogContent style={{ ...dialogStyle, width: 'min(92vw, 520px)', maxHeight: '92vh' }}>
+//           <DialogTitle style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+//             Send Reminder – {reminderProgram?.title ?? ''}
+//           </DialogTitle>
+//           <div style={{ ...dialogHead, borderBottom: `1px solid ${dividerBd}` }}>
+//             <h2 style={{ fontSize: 17, fontWeight: 700, color: textPrimary, margin: '0 0 12px' }}>Send Reminder</h2>
+//             {reminderProgram && (
+//               <div style={{ background: rowBg, borderRadius: 12, padding: '10px 14px', border: `1px solid ${dividerBd}` }}>
+//                 <p style={{ ...sectionLabel, fontSize: 9, marginBottom: 4 }}>Program</p>
+//                 <p style={{ fontSize: 14, fontWeight: 700, color: textPrimary, margin: '0 0 2px' }}>{reminderProgram.title}</p>
+//                 <p style={{ fontSize: 11, color: textSub, margin: 0 }}>
+//                   {formatDate(reminderProgram.date)} · {formatTime(reminderProgram.time)}
+//                   {reminderProgram.venue ? ` · ${reminderProgram.venue}` : ''}
+//                 </p>
+//               </div>
+//             )}
+//           </div>
+
+//           {reminderProgram && (
+//             <div style={{ overflowY: 'auto', flex: 1, padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+//               {/* Channel selector */}
+//               <div>
+//                 <p style={{ ...sectionLabel, marginBottom: 10 }}>Choose Channel</p>
+//                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+//                   {(['whatsapp', 'sms', 'email'] as ReminderChannel[]).map(ch => {
+//                     const active = reminderChannel === ch;
+//                     const cs = channelBg(ch, active);
+//                     return (
+//                       <button key={ch} onClick={() => setReminderChannel(ch)}
+//                         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 0', borderRadius: 12, border: `2px solid ${cs.borderColor}`, background: cs.background, color: cs.color, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+//                         {ch === 'whatsapp' && <MessageCircle size={18} />}
+//                         {ch === 'sms'      && <Phone size={18} />}
+//                         {ch === 'email'    && <Mail size={18} />}
+//                         {channelLabel(ch)}
+//                       </button>
+//                     );
+//                   })}
+//                 </div>
+//               </div>
+
+//               {/* Message preview */}
+//               <div>
+//                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+//                   <p style={sectionLabel}>Message Preview</p>
+//                   <button
+//                     onClick={() => handleCopyBroadcast(reminderProgram)}
+//                     style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: copiedBroadcast ? '#22c55e' : textMuted, background: rowBg, border: `1px solid ${dividerBd}`, borderRadius: 8, padding: '5px 10px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+//                   >
+//                     {copiedBroadcast ? <CheckCheck size={12} /> : <Copy size={12} />}
+//                     {copiedBroadcast ? 'Copied!' : 'Copy'}
+//                   </button>
+//                 </div>
+//                 <pre style={{ background: rowBg, border: `1px solid ${dividerBd}`, borderRadius: 12, padding: '12px 14px', fontSize: 12, color: isDark ? '#d1d5db' : '#374151', whiteSpace: 'pre-wrap', lineHeight: 1.6, fontFamily: 'inherit', margin: 0, overflowX: 'auto' }}>
+//                   {buildReminderMessage(reminderProgram)}
+//                 </pre>
+//               </div>
+
+//               {/* Members list */}
+//               <div>
+//                 <p style={{ ...sectionLabel, marginBottom: 10 }}>Send to Members ({members.length})</p>
+//                 {members.length === 0 ? (
+//                   <p style={{ fontSize: 12, color: textSub }}>No members found in database.</p>
+//                 ) : (
+//                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+//                     {members.map((member, i) => {
+//                       const link = getReminderLink(member, reminderProgram, reminderChannel);
+//                       return (
+//                         <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: rowBg, borderRadius: 12, padding: '8px 12px', border: `1px solid ${dividerBd}` }}>
+//                           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+//                           <div style={{ flex: 1, minWidth: 0 }}>
+//                             <p style={{ fontSize: 13, fontWeight: 600, color: textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.name}</p>
+//                             <p style={{ fontSize: 11, color: textSub, margin: 0 }}>{member.phone}</p>
+//                           </div>
+//                           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+//                             <button
+//                               onClick={() => handleCopyMember(i, member, reminderProgram)}
+//                               title="Copy message"
+//                               style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: `1px solid ${dividerBd}`, background: cardBg, cursor: 'pointer', color: copiedMember === i ? '#22c55e' : textSub, transition: 'all 0.15s' }}
+//                             >
+//                               {copiedMember === i ? <CheckCheck size={13} /> : <Copy size={13} />}
+//                             </button>
+//                             <a
+//                               href={link}
+//                               target="_blank"
+//                               rel="noopener noreferrer"
+//                               title={`Send via ${channelLabel(reminderChannel)}`}
+//                               style={{ height: 32, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 5, borderRadius: 8, background: channelSendBg(reminderChannel), color: '#fff', fontSize: 11, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.15s' }}
+//                               onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+//                               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+//                             >
+//                               {reminderChannel === 'whatsapp' && <MessageCircle size={12} />}
+//                               {reminderChannel === 'sms'      && <Phone size={12} />}
+//                               {reminderChannel === 'email'    && <Mail size={12} />}
+//                               <span>{channelLabel(reminderChannel)}</span>
+//                             </a>
+//                           </div>
+//                         </div>
+//                       );
+//                     })}
+//                   </div>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+
+//           <div style={{ ...dialogFoot }}>
+//             <button style={{ ...btnPrimary, width: '100%', justifyContent: 'center', height: 44 }} onClick={() => setReminderProgram(null)}>
+//               Done
+//             </button>
+//           </div>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -1266,23 +1895,19 @@ import {
   FileText, ChevronRight, Search, AlertTriangle,
   MessageCircle, Mail, Phone, Copy, CheckCheck, Loader2,
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';   // ✅ FIXED: was @supabase/supabase-js
 import { useTheme } from '@/app/components/ThemeProvider';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// ── Supabase ──────────────────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
+// ✅ FIXED: single auth-aware client instance
+const supabase = createClient();
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Program = {
@@ -1349,7 +1974,6 @@ function buildReminderMessage(program: Program): string {
   return `📢 *PROGRAM REMINDER*\n\n*${program.title}*\n\n📅 Date: ${formatDate(program.date)}\n⏰ Time: ${formatTime(program.time)}${program.venue ? `\n📍 Venue: ${program.venue}` : ''}${program.description ? `\n\n${program.description}` : ''}\n\nPlease make plans to attend. God bless you! 🙏`;
 }
 
-// ── Tag accent bar color (always the same, just the indicator) ────────────────
 function tagBarColor(tag: string) {
   if (tag === 'today') return '#f59e0b';
   if (tag === 'past') return '#a1a1aa';
@@ -1365,6 +1989,12 @@ function tagBadgeStyle(tag: string, isDark: boolean): React.CSSProperties {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ProgramPage() {
   const { isDark } = useTheme();
+
+  // ✅ FIXED: get userId for insert + scoped realtime
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   // ── Theme tokens ────────────────────────────────────────────────────────────
   const pageBg       = isDark ? '#0f1117' : '#f8f9fb';
@@ -1412,12 +2042,17 @@ export default function ProgramPage() {
     init();
   }, [fetchPrograms, fetchMembers]);
 
+  // ✅ FIXED: realtime scoped to current user
   useEffect(() => {
-    const sub = supabase.channel('programs-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'programs' }, fetchPrograms)
+    if (!userId) return;
+    const s1 = supabase.channel(`programs-rt:${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'programs', filter: `user_id=eq.${userId}` }, fetchPrograms)
       .subscribe();
-    return () => { supabase.removeChannel(sub); };
-  }, [fetchPrograms]);
+    const s2 = supabase.channel(`members-rt-prog:${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'members', filter: `user_id=eq.${userId}` }, fetchMembers)
+      .subscribe();
+    return () => { supabase.removeChannel(s1); supabase.removeChannel(s2); };
+  }, [userId, fetchPrograms, fetchMembers]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return programs;
@@ -1439,10 +2074,16 @@ export default function ProgramPage() {
 
   const handleCreate = async () => {
     if (!form.title.trim() || !form.date || !form.time) { setFormError('Title, date and time are required.'); return; }
+    // ✅ FIXED: guard on userId before insert
+    if (!userId) { setFormError('Not authenticated. Please refresh.'); return; }
     setSaving(true);
-    const { error } = await supabase.from('programs').insert([{
-      title: form.title.trim().toUpperCase(), date: form.date, time: form.time,
-      venue: form.venue.trim() || null, description: form.description.trim() || null,
+    const { error } = await (supabase.from('programs') as any).insert([{
+      user_id: userId,
+      title: form.title.trim().toUpperCase(),
+      date: form.date,
+      time: form.time,
+      venue: form.venue.trim() || null,
+      description: form.description.trim() || null,
     }]);
     setSaving(false);
     if (error) { setFormError('Failed to save. Please try again.'); return; }
@@ -1490,7 +2131,6 @@ export default function ProgramPage() {
     return '#4f46e5';
   };
 
-  // ── Inline input/textarea style ──────────────────────────────────────────
   const inputStyle: React.CSSProperties = {
     height: 44, padding: '0 12px', borderRadius: 8, border: `1.5px solid ${inputBd}`,
     background: inputBg, color: textPrimary, fontSize: 14, fontFamily: 'inherit',
@@ -1506,7 +2146,6 @@ export default function ProgramPage() {
   const btnSecondary: React.CSSProperties = { height: 42, padding: '0 16px', borderRadius: 8, border: `1.5px solid ${cardBd}`, background: 'transparent', color: textMuted, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' };
   const btnDanger: React.CSSProperties = { height: 42, padding: '0 16px', borderRadius: 8, border: `1.5px solid ${isDark ? 'rgba(239,68,68,0.3)' : '#fca5a5'}`, background: isDark ? 'rgba(239,68,68,0.08)' : '#fff1f2', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 };
 
-  // ── Dialog shared wrapper style ────────────────────────────────────────────
   const dialogStyle: React.CSSProperties = {
     background: cardBg, border: `1px solid ${cardBd}`, borderRadius: 20,
     padding: 0, display: 'flex', flexDirection: 'column', color: textPrimary,
@@ -1568,14 +2207,11 @@ export default function ProgramPage() {
                 {progs.map(prog => {
                   const tag = daysTag(prog.date);
                   return (
-                    <div
-                      key={prog.id}
-                      onClick={() => setViewProgram(prog)}
+                    <div key={prog.id} onClick={() => setViewProgram(prog)}
                       style={{ background: cardBg, border: `1px solid ${cardBd}`, borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.18s', boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = cardHoverBd; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.1)'; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = cardBd; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)'; }}
                     >
-                      {/* accent bar */}
                       <div style={{ height: 4, background: tagBarColor(tag) }} />
                       <div style={{ padding: '14px 16px' }}>
                         <p style={{ fontSize: 10, fontWeight: 700, color: textSub, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -1606,9 +2242,7 @@ export default function ProgramPage() {
         )}
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          VIEW PROGRAM DIALOG
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* VIEW PROGRAM DIALOG */}
       <Dialog open={!!viewProgram} onOpenChange={() => setViewProgram(null)}>
         <DialogContent style={{ ...dialogStyle, width: 'min(92vw, 500px)' }}>
           <DialogTitle style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
@@ -1625,7 +2259,6 @@ export default function ProgramPage() {
                   </span>
                   <h2 style={{ fontSize: 20, fontWeight: 800, color: textPrimary, margin: 0, lineHeight: 1.2 }}>{viewProgram.title}</h2>
                 </div>
-
                 <div style={{ overflowY: 'auto', flex: 1, padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {[
                     { icon: <Calendar size={15} color={textSub} />, label: 'Date', value: formatDate(viewProgram.date) },
@@ -1647,15 +2280,12 @@ export default function ProgramPage() {
                     </div>
                   )}
                 </div>
-
                 <div style={{ ...dialogFoot, display: 'flex', gap: 10 }}>
                   <button style={{ ...btnDanger, flex: 1, justifyContent: 'center' }} onClick={() => setDeleteId(viewProgram.id)}>
                     <Trash2 size={14} /> Delete
                   </button>
-                  <button
-                    style={{ ...btnPrimary, flex: 1, justifyContent: 'center' }}
-                    onClick={() => { setReminderProgram(viewProgram); setViewProgram(null); setReminderChannel('whatsapp'); }}
-                  >
+                  <button style={{ ...btnPrimary, flex: 1, justifyContent: 'center' }}
+                    onClick={() => { setReminderProgram(viewProgram); setViewProgram(null); setReminderChannel('whatsapp'); }}>
                     <Bell size={14} /> Send Reminder
                   </button>
                 </div>
@@ -1665,15 +2295,12 @@ export default function ProgramPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          CREATE PROGRAM DIALOG
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* CREATE PROGRAM DIALOG */}
       <Dialog open={createOpen} onOpenChange={v => { setCreateOpen(v); setFormError(''); }}>
         <DialogContent style={{ ...dialogStyle, width: 'min(92vw, 460px)' }}>
           <div style={dialogHead}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: textPrimary, margin: 0 }}>Create Program</h2>
           </div>
-
           <div style={{ overflowY: 'auto', flex: 1, padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             {formError && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDark ? 'rgba(239,68,68,0.1)' : '#fff1f2', border: `1px solid ${isDark ? 'rgba(239,68,68,0.25)' : '#fca5a5'}`, borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#ef4444' }}>
@@ -1703,10 +2330,10 @@ export default function ProgramPage() {
               <textarea placeholder="Describe the program..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} style={textareaStyle} rows={4} />
             </div>
           </div>
-
           <div style={{ ...dialogFoot, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button style={btnSecondary} onClick={() => { setCreateOpen(false); setFormError(''); }}>Cancel</button>
-            <button disabled={saving} onClick={handleCreate} style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}>
+            {/* ✅ FIXED: also guard on userId in the disabled check */}
+            <button disabled={saving || !userId} onClick={handleCreate} style={{ ...btnPrimary, opacity: (saving || !userId) ? 0.7 : 1 }}>
               {saving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
               Save Program
             </button>
@@ -1714,9 +2341,7 @@ export default function ProgramPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          DELETE CONFIRM DIALOG
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* DELETE CONFIRM DIALOG */}
       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent style={{ background: cardBg, border: `1px solid ${cardBd}`, borderRadius: 18, maxWidth: 'min(90vw, 400px)', color: textPrimary }}>
           <AlertDialogHeader>
@@ -1734,9 +2359,7 @@ export default function ProgramPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          SEND REMINDER DIALOG
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* SEND REMINDER DIALOG */}
       <Dialog open={!!reminderProgram} onOpenChange={v => { if (!v) setReminderProgram(null); }}>
         <DialogContent style={{ ...dialogStyle, width: 'min(92vw, 520px)', maxHeight: '92vh' }}>
           <DialogTitle style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
@@ -1758,8 +2381,6 @@ export default function ProgramPage() {
 
           {reminderProgram && (
             <div style={{ overflowY: 'auto', flex: 1, padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-              {/* Channel selector */}
               <div>
                 <p style={{ ...sectionLabel, marginBottom: 10 }}>Choose Channel</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
@@ -1779,14 +2400,11 @@ export default function ProgramPage() {
                 </div>
               </div>
 
-              {/* Message preview */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <p style={sectionLabel}>Message Preview</p>
-                  <button
-                    onClick={() => handleCopyBroadcast(reminderProgram)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: copiedBroadcast ? '#22c55e' : textMuted, background: rowBg, border: `1px solid ${dividerBd}`, borderRadius: 8, padding: '5px 10px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                  >
+                  <button onClick={() => handleCopyBroadcast(reminderProgram)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: copiedBroadcast ? '#22c55e' : textMuted, background: rowBg, border: `1px solid ${dividerBd}`, borderRadius: 8, padding: '5px 10px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
                     {copiedBroadcast ? <CheckCheck size={12} /> : <Copy size={12} />}
                     {copiedBroadcast ? 'Copied!' : 'Copy'}
                   </button>
@@ -1796,7 +2414,6 @@ export default function ProgramPage() {
                 </pre>
               </div>
 
-              {/* Members list */}
               <div>
                 <p style={{ ...sectionLabel, marginBottom: 10 }}>Send to Members ({members.length})</p>
                 {members.length === 0 ? (
@@ -1813,22 +2430,14 @@ export default function ProgramPage() {
                             <p style={{ fontSize: 11, color: textSub, margin: 0 }}>{member.phone}</p>
                           </div>
                           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                            <button
-                              onClick={() => handleCopyMember(i, member, reminderProgram)}
-                              title="Copy message"
-                              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: `1px solid ${dividerBd}`, background: cardBg, cursor: 'pointer', color: copiedMember === i ? '#22c55e' : textSub, transition: 'all 0.15s' }}
-                            >
+                            <button onClick={() => handleCopyMember(i, member, reminderProgram)} title="Copy message"
+                              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: `1px solid ${dividerBd}`, background: cardBg, cursor: 'pointer', color: copiedMember === i ? '#22c55e' : textSub, transition: 'all 0.15s' }}>
                               {copiedMember === i ? <CheckCheck size={13} /> : <Copy size={13} />}
                             </button>
-                            <a
-                              href={link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title={`Send via ${channelLabel(reminderChannel)}`}
+                            <a href={link} target="_blank" rel="noopener noreferrer" title={`Send via ${channelLabel(reminderChannel)}`}
                               style={{ height: 32, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 5, borderRadius: 8, background: channelSendBg(reminderChannel), color: '#fff', fontSize: 11, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.15s' }}
                               onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                            >
+                              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
                               {reminderChannel === 'whatsapp' && <MessageCircle size={12} />}
                               {reminderChannel === 'sms'      && <Phone size={12} />}
                               {reminderChannel === 'email'    && <Mail size={12} />}
